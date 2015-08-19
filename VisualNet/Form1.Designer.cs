@@ -64,6 +64,10 @@
             this.openGLCtrl1.RenderContextType = SharpGL.RenderContextType.DIBSection;
             //ignore and continue
             this.openGLCtrl1.OpenGLDraw += new SharpGL.RenderEventHandler(glmanager.openGLCtrl1_OpenGLDraw);
+            this.openGLCtrl1.MouseDown += new System.Windows.Forms.MouseEventHandler(glmanager.openGLCtrl1_MouseDown);
+            this.openGLCtrl1.MouseMove += new System.Windows.Forms.MouseEventHandler(glmanager.openGLCtrl1_MouseMove);
+            this.openGLCtrl1.MouseUp += new System.Windows.Forms.MouseEventHandler(glmanager.openGLCtrl1_MouseUp);
+            this.openGLCtrl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glmanager.openGLCtrl1_MouseWheel);
             this.openGLCtrl1.RenderTrigger = SharpGL.RenderTrigger.TimerBased;
             this.openGLCtrl1.Size = new System.Drawing.Size(1101, 702);
             this.openGLCtrl1.TabIndex = 2;
