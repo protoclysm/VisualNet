@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -9,14 +10,14 @@ namespace VisualNet
 {
     public abstract class WorkGenerator
     {
-        protected ThreadSafeQueue<Node> _clientWorkQueue;
-        protected ThreadSafeQueue<RenderLine> _clientRenderQueue;
+        protected ConcurrentQueue<Node> _clientWorkQueue;
+        public ConcurrentQueue<RenderLine> _clientRenderQueue;
         protected Tuple<int, int, int> _blockOffset;
         protected GLManager _glmanager;
         protected Node[] _block;
 
 
-        public WorkGenerator(ref ThreadSafeQueue<Node> queueToAddWorkTo, ref ThreadSafeQueue<RenderLine> renderLines, ref Tuple<int, int, int> blockOffset, Node[] block)
+        public WorkGenerator(ref ConcurrentQueue<Node> queueToAddWorkTo, ref ConcurrentQueue<RenderLine> renderLines, ref Tuple<int, int, int> blockOffset, Node[] block)
         {
             _block = block;
             _blockOffset = blockOffset;
@@ -24,6 +25,6 @@ namespace VisualNet
             _clientRenderQueue = renderLines;
         }
 
-        public abstract ThreadSafeQueue<RenderLine> Generate(Node workNode);
+        public abstract void Generate(Node workNode);
     }
 }

@@ -33,12 +33,12 @@ namespace VisualNet
 
         public Form1()
         {
-            glmanager = new GLManager();
+            glmanager = new GLManager(blockCountX, blockCountY, blockCountZ);
 
             InitializeComponent();
             glmanager.SetGL(this.openGLCtrl1.OpenGL);
             cycleTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
-            cycleTimer.Interval = 1;
+            cycleTimer.Interval = 2;
             opTimer.Elapsed += new ElapsedEventHandler(OpTimeEvent);
             opTimer.Interval = 1000;
 
