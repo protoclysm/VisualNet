@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace VisualNet
 {
@@ -17,9 +18,8 @@ namespace VisualNet
     {
         Node[] nodeCube;//each work manager owns its cube
         ConcurrentQueue<Node> _fireQueue = new ConcurrentQueue<Node>();
-        ConcurrentQueue<RenderLine> _renderQueue = new ConcurrentQueue<RenderLine>();
-
-        WorkGenerator _workGenerator;
+        public static ConcurrentQueue<RenderLine> _renderQueue;
+        Random rr;
         Tuple<int, int, int> blockOffset;
         GLManager _glmanager;
         int blockWidth,
@@ -35,7 +35,9 @@ namespace VisualNet
 
         public WorkManager(int bwidth, int bheight, int bdepth, int offsetX, int offsetY, int offsetZ, GLManager glmanager)
         {
+            rr = new Random(offsetX + offsetY + offsetZ);
             _glmanager = glmanager;
+            _renderQueue = glmanager._renderQueue;
             blockOffset = new Tuple<int, int, int>(offsetX, offsetY, offsetZ);
             blockWidth = bwidth;
             blockHeight = bheight;
@@ -46,13 +48,13 @@ namespace VisualNet
             nodeCube = new Node[blockWidth * blockHeight * blockDepth];
 
             //populate the cube with nodes
-            for (int d = 0; d < blockDepth; d++)
+            for (short d = 0; d < blockDepth; d++)
             {
-                for (int w = 0; w < blockWidth; w++)
+                for (short w = 0; w < blockWidth; w++)
                 {
-                    for (int h = 0; h < blockHeight; h++)
+                    for (short h = 0; h < blockHeight; h++)
                     {
-                        nodeCube[w + blockWidth * (h + blockHeight * d)] = new NormalNode(w, h, d, (w + blockWidth * (h + blockHeight * d)));
+                        nodeCube[w + blockWidth * (h + blockHeight * d)] = new Node(w, h, d, (w + blockWidth * (h + blockHeight * d)));
                     }
                 }
             }
@@ -90,7 +92,6 @@ namespace VisualNet
                     }
                 }
             }
-            _workGenerator = new FiringWorkGenerator(ref _fireQueue, ref _renderQueue, blockOffset, nodeCube);
         }
 
         public void Connect(Node n, Node p, float weight)
@@ -111,7 +112,6 @@ namespace VisualNet
                     )
                 );
         }
-        Random rr = new Random();
         //orchestrates
         public int WorkCycle(int procnum)
         {
@@ -126,15 +126,15 @@ namespace VisualNet
             working = true;
 
             //basic input for demo
-            //for (int w = blockWidth / 2; w < (blockWidth / 2) + 3; w++)
-            //{
-            //    for (int h = blockHeight / 2; h < (blockHeight / 2) + 3; h++)
-            //    {
-            int vary =4;
-            for (int w = 0; w < blockWidth - vary; w += vary)
+            for (int w = blockWidth / 2; w < (blockWidth / 2) + 1; w++)
             {
-                for (int h = 0; h < blockHeight - vary; h += vary)
+                for (int h = blockHeight / 2; h < (blockHeight / 2) + 1; h++)
                 {
+                    //int vary =10;
+                    //for (int w = 0; w < blockWidth - vary; w += vary)
+                    //{
+                    //    for (int h = 0; h < blockHeight - vary; h += vary)
+                    //    {
                     //activate nodes on the first layer
                     nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))].Activation = 1;
                     nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))].IsLoaded = true;
@@ -142,90 +142,83 @@ namespace VisualNet
                     _fireQueue.Enqueue(nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))]);
                 }
             }
+            for (int w = 0; w < blockWidth; w++)
+            {
 
+                nodeCube[(w) + blockWidth * ((blockWidth/2) + blockHeight * (blockDepth - 1))].Activation = 1;
+                nodeCube[(w) + blockWidth * ((blockWidth / 2) + blockHeight * (blockDepth - 1))].IsLoaded = true;
+                //add them to the work queue
+                _fireQueue.Enqueue(nodeCube[(w) + blockWidth * ((blockWidth / 2) + blockHeight * (blockDepth - 1))]);
+
+            }
+            for (int h = 0; h < blockHeight; h++)
+            {
+                nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))].Activation = 1;
+                nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))].IsLoaded = true;
+                //add them to the work queue
+                _fireQueue.Enqueue(nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))]);
+            }
             //This does the work. Cycles through the queue.
             //For each node, add connection weight to connection child,
             //return list of lines to be rendered, add them to glmananger queue
             int counter = 0;
-            Node workNode;
 
-            while (_fireQueue.Count != 0)
+            while (_fireQueue.Count > 0 && counter<1500000)
             {
-                _fireQueue.TryDequeue(out workNode);
-
+                //counter = 0;
+                Node workNode;
                 //maybe add a threshold to node, and use that instead of 1
-                if (workNode.IsLoaded &&workNode.Activation>=1)
+                if (_fireQueue.TryDequeue(out workNode) && workNode.IsLoaded && workNode.Activation >= 1)
                 {
-                    _workGenerator.Generate(workNode);
-                    //foreach (RenderLine l in workNode.ChildrenLines)
-                    {
-                        //if (rr.Next(20) == 1)
-                            //l.strength -= .075f;
-                    }
-                    //workNode.IsLoaded = false;
-                    //workNode.Activation = 0;
+                    Generate(workNode);
+                    workNode.IsLoaded = false;
+                    workNode.Activation = 0;
                     counter++;
-                }
-                //if (counter % 10000 == 1)
-                _glmanager.AddQueue(_renderQueue); 
-                //Parallel.Invoke(() => _glmanager.AddQueue(_renderQueue));
-
-
+                } 
             }
-            int cnt = 0;
-   
-            //Node n;
-            Node c;
-            int ss = 0;
+
+
             foreach (Node n in nodeCube)
-            //for (int x = 0; x < nodeCube.Length;x++ )
             {
-                //n = nodeCube[x];
-
-                //n.Activation -= .75f;
-                //cnt = 0;
-                //for (int y = 0; y < n.ChildrenLines.Count; y++)
-                //foreach (RenderLine l in n.ChildrenLines)
-                {
-                    //if (rr.Next(20) == 1)
-                        //l.strength -=.05f;
-                    //if (rr.Next(10) == 1 && n.ChildrenLines.Count>1)
-                    //{
-                    //    if (rr.Next(100) == 1)
-                    //    {
-                    //        try
-                    //        {
-                    //            ss = (n.X) + blockWidth * ((n.Y) + blockHeight * (n.Z - 2));
-                    //            c = nodeCube[ss];
-                    //            n.Children.Add(ss);
-                    //            n.ChildrenLines.Add(
-                    //                new RenderLine(
-                    //                    (n.X * blockw) + (blockOffset.Item1),
-                    //                    (n.Y * blockh) + (blockOffset.Item2),
-                    //                    (n.Z * blockd) + (blockOffset.Item3),
-                    //                    (c.X * blockw) + (blockOffset.Item1),
-                    //                    (c.Y * blockh) + (blockOffset.Item2),
-                    //                    (c.Z * blockd) + (blockOffset.Item3),
-                    //                    1 / (blockOffset.Item1 + 1),
-                    //                    1 / (blockOffset.Item2 + 1),
-                    //                    1 / (blockOffset.Item3 + 1),
-                    //                    .1f
-                    //                    )
-                    //                );
-                    //        }
-                    //        catch { }
-                    //    }
-
-                    //    n.ChildrenLines.RemoveAt(cnt);
-                    //    n.Children.RemoveAt(cnt);
-                    //}
-                    //cnt++;
-                    //weaken all connections
-                    //l.strength *= .985f;
-                }
+                n.Threshold += .0025f;
             }
             working = false;
             return counter;
+        }
+        Node child;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Generate(Node workNode)
+        {
+            int index = 0;
+            foreach (int tt in workNode.Children)
+            {
+                child = nodeCube[tt];
+                child.Activation += workNode.ChildrenLines[index].strength;
+                //don't need to reload nodes that are already in queue
+
+                //experimental learning with child weights, doesn't work
+                if (child.Activation >= child.Threshold && !child.IsLoaded)
+                {
+                    //if (rr.Next(9) == 0)
+                    {
+                        workNode.ChildrenLines[index].strength += .025f;
+                    } 
+                    //if (rr.Next(5) == 0)
+                    {
+                        _renderQueue.Enqueue(workNode.ChildrenLines[index]);
+                        
+                    } 
+
+                    workNode.ChildrenLines[index].actionG = child.Activation;
+
+                    child.IsLoaded = true;
+                    //add activated children to work queue
+                    _fireQueue.Enqueue(child);
+                    //add lines to be rendered
+                }
+                index++;
+            }
         }
     }
 

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace VisualNet
 {
-    public abstract class Node
+    public class Node
     {
-        public Node(int x, int y, int z,int offset)
+        public Node(short x, short y, short z, int offset)
         {
             X = x;
             Y = y;
@@ -16,12 +16,14 @@ namespace VisualNet
             Offset = offset;
             Children = new List<int>();
             ChildrenLines = new List<RenderLine>();
+            Threshold = 1;
         }
         public float Activation { get; set; }
+        public float Threshold { get; set; }
         public bool IsLoaded { get; set; }
-        public int X { get; private set; }
-        public int Y { get; private set; }
-        public int Z { get; private set; }
+        public short X { get; private set; }
+        public short Y { get; private set; }
+        public short Z { get; private set; }
         public int Offset { get; private set; }
         public List<int> Children { get; private set; }
         public List<RenderLine> ChildrenLines { get; private set; }

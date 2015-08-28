@@ -22,14 +22,14 @@ namespace VisualNet
         float translateX = -.2f, translateY = -.2f;
 
         bool isRightClickDown = false;
-
+        RenderLine outrl;
         bool isdown = false;
         int blockCountX, blockCountY, blockCountZ;
         bool doRender = true;
         public OpenGL gl;
 
-        ConcurrentQueue<RenderLine> lineQueue = new ConcurrentQueue<RenderLine>();
-        public GLManager(int blockCountX, int blockCountY, int blockCountZ)
+        public ConcurrentQueue<RenderLine> _renderQueue;
+        public GLManager(int blockCountX, int blockCountY, int blockCountZ,ref ConcurrentQueue<RenderLine> renderQueue)
         {
             this.blockCountX = blockCountX;
             this.blockCountY = blockCountY;
@@ -37,6 +37,7 @@ namespace VisualNet
             blockw = 1 / (float)blockWidth;
             blockh = 1 / (float)blockHeight;
             blockd = 1 / (float)blockDepth;
+            _renderQueue = renderQueue;
         }
         public void SetGL(OpenGL gl)
         {
@@ -44,16 +45,11 @@ namespace VisualNet
         }
         public void AddQueue(ConcurrentQueue<RenderLine> workQueue)
         {
-            //using (var locked = workQueue.Lock())
-            //{
-            //while (locked.Count > 0) 
-            RenderLine outrl;
             while (workQueue.Count > 0)
             {
                 if (workQueue.TryDequeue(out outrl))
-                    lineQueue.Enqueue(outrl);
+                    _renderQueue.Enqueue(outrl);
             }
-            //}
         }
 
         public void AllowRender()
@@ -119,11 +115,7 @@ namespace VisualNet
                             }
                         }
                     }
-
-
-
                     gl.End();
-
 
                     gl.Color(0f, .9f, (float)1);
                     gl.Begin(OpenGL.GL_LINES);
@@ -144,9 +136,9 @@ namespace VisualNet
                     RenderLine cq;
                     //using (var locked = lineQueue.Lock())
                     {
-                        while (lineQueue.Count > 0)
+                        while (_renderQueue.Count > 0)
                         {
-                            if (lineQueue.TryDequeue(out cq))
+                            if (_renderQueue.TryDequeue(out cq))
                             {
                                 bx0 = cq.xS;
                                 bx1 = cq.xV;

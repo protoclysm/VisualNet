@@ -57,7 +57,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.openGLCtrl1.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.openGLCtrl1.DrawFPS = false;
-            this.openGLCtrl1.FrameRate = 240;
+            this.openGLCtrl1.FrameRate = 999;
             this.openGLCtrl1.Location = new System.Drawing.Point(12, 12);
             this.openGLCtrl1.Name = "openGLCtrl1";
             this.openGLCtrl1.OpenGLVersion = SharpGL.Version.OpenGLVersion.OpenGL4_4;

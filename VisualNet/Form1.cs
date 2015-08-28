@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
@@ -23,7 +24,7 @@ namespace VisualNet
         int OpCounter = 0;
         public static bool isThreading = false;
         public GLManager glmanager;
-
+        ConcurrentQueue<RenderLine> renderQueue = new ConcurrentQueue<RenderLine>();
         int blockWidth = int.Parse(ConfigurationManager.AppSettings["gcBlockWidth"]),
                         blockHeight = int.Parse(ConfigurationManager.AppSettings["gcBlockHeight"]),
                         blockDepth = int.Parse(ConfigurationManager.AppSettings["gcBlockDepth"]),
@@ -33,12 +34,12 @@ namespace VisualNet
 
         public Form1()
         {
-            glmanager = new GLManager(blockCountX, blockCountY, blockCountZ);
+            glmanager = new GLManager(blockCountX, blockCountY, blockCountZ,ref renderQueue);
 
             InitializeComponent();
             glmanager.SetGL(this.openGLCtrl1.OpenGL);
             cycleTimer.Elapsed += new ElapsedEventHandler(DisplayTimeEvent);
-            cycleTimer.Interval = 2;
+            cycleTimer.Interval = 1;
             opTimer.Elapsed += new ElapsedEventHandler(OpTimeEvent);
             opTimer.Interval = 1000;
 
