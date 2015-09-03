@@ -29,7 +29,7 @@ namespace VisualNet
         public OpenGL gl;
 
         public ConcurrentQueue<RenderLine> _renderQueue;
-        public GLManager(int blockCountX, int blockCountY, int blockCountZ,ref ConcurrentQueue<RenderLine> renderQueue)
+        public GLManager(int blockCountX, int blockCountY, int blockCountZ, ref ConcurrentQueue<RenderLine> renderQueue)
         {
             this.blockCountX = blockCountX;
             this.blockCountY = blockCountY;
@@ -140,17 +140,20 @@ namespace VisualNet
                         {
                             if (_renderQueue.TryDequeue(out cq))
                             {
+
                                 bx0 = cq.xS;
                                 bx1 = cq.xV;
                                 by0 = cq.yS;
                                 by1 = cq.yV;
                                 bz0 = cq.zS;
                                 bz1 = cq.zV;
+                                //if (bz0 > bz1)
+                                {
+                                    gl.Color(100 * (cq.zV - cq.zS), cq.actionG, 0);
 
-                                gl.Color(100 * (cq.zV - cq.zS), cq.actionG, 0);
-
-                                gl.Vertex(bx0, by0, bz0);
-                                gl.Vertex(bx1, by1, bz1);
+                                    gl.Vertex(bx0, by0, bz0);
+                                    gl.Vertex(bx1, by1, bz1);
+                                }
                             }
                             renderCounterL++;
                         }

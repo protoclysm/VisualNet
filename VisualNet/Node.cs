@@ -16,7 +16,7 @@ namespace VisualNet
             Offset = offset;
             Children = new List<int>();
             ChildrenLines = new List<RenderLine>();
-            Threshold = 1;
+            Threshold =.51f;
         }
         public float Activation { get; set; }
         public float Threshold { get; set; }

@@ -85,6 +85,10 @@ namespace VisualNet
                                     if (h + conn.y >= 0 && h + conn.y < blockHeight)
                                     {
                                         Connect(p, nodeCube[(w + conn.x) + blockWidth * ((h + conn.y) + blockHeight * (d + conn.z))], conn.weight);
+                                        //if (d == blockDepth - 2)
+                                        //{
+                                        //    Connect(p, nodeCube[(w + conn.x) + blockWidth * ((h + conn.y) + blockHeight * (0))], conn.weight);
+                                        //}
                                     }
                                 }
                             }
@@ -124,63 +128,76 @@ namespace VisualNet
                     new IntPtr(1 << processor));
             }
             working = true;
-
+            Node temp;
             //basic input for demo
-            for (int w = blockWidth / 2; w < (blockWidth / 2) + 1; w++)
-            {
-                for (int h = blockHeight / 2; h < (blockHeight / 2) + 1; h++)
+
+            while (_fireQueue.Count == 0)
+            {            
+                for (int w = blockWidth / 2; w < (blockWidth / 2) + 3; w++)
                 {
-                    //int vary =10;
-                    //for (int w = 0; w < blockWidth - vary; w += vary)
-                    //{
-                    //    for (int h = 0; h < blockHeight - vary; h += vary)
-                    //    {
-                    //activate nodes on the first layer
-                    nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))].Activation = 1;
-                    nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))].IsLoaded = true;
-                    //add them to the work queue
-                    _fireQueue.Enqueue(nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))]);
+                    for (int h = blockHeight / 2; h < (blockHeight / 2) + 3; h++)
+                    {
+                //int vary = 2;
+                //for (int w = 0; w < blockWidth - vary; w += vary)
+                //{
+                //    for (int h = 0; h < blockHeight - vary; h += vary)
+                //    {
+                        temp = nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))];
+                        //activate nodes on the first layer
+                        temp.Activation = temp.Threshold;
+                        temp.IsLoaded = true;
+                        //add them to the work queue
+                        _fireQueue.Enqueue(temp);
+                    }
+                } 
+                for (int w = 10; w < 15; w++)
+                {
+                    for (int h = 10; h < 15; h++)
+                    {
+                        //int vary = 2;
+                        //for (int w = 0; w < blockWidth - vary; w += vary)
+                        //{
+                        //    for (int h = 0; h < blockHeight - vary; h += vary)
+                        //    {
+                        temp = nodeCube[(w) + blockWidth * ((h) + blockHeight * (0))];
+                        //activate nodes on the first layer
+                        temp.Activation = temp.Threshold;
+                        temp.IsLoaded = true;
+                        //add them to the work queue
+                        _fireQueue.Enqueue(temp);
+                    }
                 }
             }
-            for (int w = 0; w < blockWidth; w++)
-            {
 
-                nodeCube[(w) + blockWidth * ((blockWidth/2) + blockHeight * (blockDepth - 1))].Activation = 1;
-                nodeCube[(w) + blockWidth * ((blockWidth / 2) + blockHeight * (blockDepth - 1))].IsLoaded = true;
-                //add them to the work queue
-                _fireQueue.Enqueue(nodeCube[(w) + blockWidth * ((blockWidth / 2) + blockHeight * (blockDepth - 1))]);
-
-            }
-            for (int h = 0; h < blockHeight; h++)
-            {
-                nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))].Activation = 1;
-                nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))].IsLoaded = true;
-                //add them to the work queue
-                _fireQueue.Enqueue(nodeCube[(blockHeight / 2) + blockWidth * ((h) + blockHeight * (blockDepth - 1))]);
-            }
             //This does the work. Cycles through the queue.
             //For each node, add connection weight to connection child,
             //return list of lines to be rendered, add them to glmananger queue
             int counter = 0;
-
-            while (_fireQueue.Count > 0 && counter<1500000)
+            Node workNode;
+            while (_fireQueue.Count > 0 && counter < 200000)
             {
                 //counter = 0;
-                Node workNode;
+
                 //maybe add a threshold to node, and use that instead of 1
-                if (_fireQueue.TryDequeue(out workNode) && workNode.IsLoaded && workNode.Activation >= 1)
+                if (_fireQueue.TryDequeue(out workNode) && workNode.IsLoaded && workNode.Activation >= workNode.Threshold)
                 {
                     Generate(workNode);
                     workNode.IsLoaded = false;
                     workNode.Activation = 0;
                     counter++;
-                } 
+                }
             }
-
+            //counter = 0;
+            //while (_fireQueue.Count > 0 && counter < 15000)
+            {
+                //_fireQueue.TryDequeue(out workNode);
+                //counter++;
+            }
 
             foreach (Node n in nodeCube)
             {
-                n.Threshold += .0025f;
+                n.Activation = Math.Max(n.Activation - .05f, 0);
+                n.Threshold *= 1.004f;
             }
             working = false;
             return counter;
@@ -200,15 +217,16 @@ namespace VisualNet
                 //experimental learning with child weights, doesn't work
                 if (child.Activation >= child.Threshold && !child.IsLoaded)
                 {
-                    //if (rr.Next(9) == 0)
+                    if (rr.Next(9) == 0)
                     {
-                        workNode.ChildrenLines[index].strength += .025f;
-                    } 
-                    //if (rr.Next(5) == 0)
+                        workNode.ChildrenLines[index].strength += .0025f;
+                        child.Threshold -= .021f;
+                    }
+                    //if (rr.Next(10) == 0)
                     {
                         _renderQueue.Enqueue(workNode.ChildrenLines[index]);
-                        
-                    } 
+
+                    }
 
                     workNode.ChildrenLines[index].actionG = child.Activation;
 
